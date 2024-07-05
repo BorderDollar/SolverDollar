@@ -2,7 +2,6 @@ import itertools
 import pandas as pd
 from datetime import datetime
 
-# define Campaign class that contains information about the campaign
 class Campaign:
     def __init__(self, campaign_id, target_amount, interest_rate):
         self.campaign_id = campaign_id
@@ -33,10 +32,8 @@ class Campaign:
 
         return best_combination, best_excess
 
-# we define the fund solver as a separate Class
 class FundSolver:
     def __init__(self):
-        # initialize an array of campaigns and funders
         self.campaigns = []
         self.funders = []
         self.funder_allocation_history = []
@@ -45,18 +42,18 @@ class FundSolver:
         campaign = Campaign(campaign_id, target_amount, interest_rate)
         self.campaigns.append(campaign)
 
-    def add_funder(self, amount):
-        funder = {'amount': amount, 'start_time': datetime.now(), 'campaign_id': None}
+    def add_funder(self, funder_id, amount):
+        funder = {'funder_id': funder_id, 'amount': amount, 'start_time': datetime.now(), 'campaign_id': None}
         self.funders.append(funder)
         self.optimize_all_campaigns()
 
-    def remove_funder(self, amount):
-        funder = next((f for f in self.funders if f['amount'] == amount), None)
+    def remove_funder(self, funder_id):
+        funder = next((f for f in self.funders if f['funder_id'] == funder_id), None)
         if funder:
             self.funders.remove(funder)
             self.optimize_all_campaigns()
         else:
-            print(f"Funder with amount {amount} not found.")
+            print(f"Funder with ID {funder_id} not found.")
 
     def optimize_all_campaigns(self):
         for campaign in self.campaigns:
@@ -70,6 +67,7 @@ class FundSolver:
         if funder['campaign_id'] is not None:
             duration = (datetime.now() - funder['start_time']).total_seconds()
             self.funder_allocation_history.append({
+                'funder_id': funder['funder_id'],
                 'amount': funder['amount'],
                 'from_campaign_id': funder['campaign_id'],
                 'to_campaign_id': new_campaign_id,
@@ -87,7 +85,7 @@ class FundSolver:
                 "campaign_id": campaign.campaign_id,
                 "target_amount": campaign.target_amount,
                 "interest_rate": campaign.interest_rate,
-                "current_allocation": [funder['amount'] for funder in campaign.current_allocation],
+                "current_allocation": [(funder['funder_id'], funder['amount']) for funder in campaign.current_allocation],
                 "excess_capital": campaign.excess_capital
             })
         return allocations
@@ -101,15 +99,13 @@ solver = FundSolver()
 # Add campaigns
 solver.add_campaign(campaign_id=1, target_amount=800, interest_rate=5.0)
 solver.add_campaign(campaign_id=2, target_amount=1200, interest_rate=7.5)
-solver.add_campaign(campaign_id=3, target_amount=1000, interest_rate=15)
 
 # Add funders
-solver.add_funder(100)
-solver.add_funder(200)
-solver.add_funder(300)
-solver.add_funder(400)
-solver.add_funder(500)
-solver.add_funder(300)
+solver.add_funder(funder_id="F1", amount=100)
+solver.add_funder(funder_id="F2", amount=200)
+solver.add_funder(funder_id="F3", amount=300)
+solver.add_funder(funder_id="F4", amount=400)
+solver.add_funder(funder_id="F5", amount=500)
 
 # Get current allocations
 allocations = solver.get_campaign_allocations()
@@ -118,7 +114,7 @@ print("Campaign Allocations")
 print(df_allocations)
 
 # Remove a funder
-solver.remove_funder(300)
+solver.remove_funder("F3")
 
 # Get current allocations after removal
 allocations_after_removal = solver.get_campaign_allocations()
